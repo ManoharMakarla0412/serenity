@@ -999,6 +999,8 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(7, (i) {
+                // 1=Mon ... 7=Sun
+                final labels = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
                 final day = i + 1;
                 final selected = repeat.contains(day);
                 return GestureDetector(
@@ -1007,10 +1009,9 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
                   }),
                   child: CircleAvatar(
                     radius: 20,
-                    backgroundColor: selected
-                        ? Colors.blue
-                        : const Color(0xFF1C2330),
-                    child: Text(['S', 'M', 'T', 'W', 'T', 'F', 'S'][i]),
+                    backgroundColor:
+                        selected ? Colors.blue : const Color(0xFF1C2330),
+                    child: Text(labels[i]),
                   ),
                 );
               }),
@@ -1153,6 +1154,10 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
       width: 70,
       height: 140,
       child: ListWheelScrollView.useDelegate(
+        controller: FixedExtentScrollController(
+          // For hours: 12 maps to index 0; minutes map directly
+          initialItem: (value == max) ? 0 : value,
+        ),
         itemExtent: 42,
         perspective: 0.002,
         physics: const FixedExtentScrollPhysics(),
