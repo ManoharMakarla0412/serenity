@@ -12,7 +12,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -149,6 +148,24 @@ const kLightCard = Color(0xFFEDEFF5);
 
 const kPrimary = Color(0xFF4C8DFF);
 
+// Theme-aware helpers for consistent light/dark colors
+Color mutedText(BuildContext context) =>
+  Theme.of(context).brightness == Brightness.dark
+    ? Colors.white54
+    : Colors.black54;
+Color mediumText(BuildContext context) =>
+  Theme.of(context).brightness == Brightness.dark
+    ? Colors.white70
+    : Colors.black87;
+Color subtleText(BuildContext context) =>
+  Theme.of(context).brightness == Brightness.dark
+    ? Colors.white38
+    : Colors.black38;
+Color chipBg(BuildContext context) =>
+  Theme.of(context).brightness == Brightness.dark
+    ? const Color(0xFF1C2330)
+    : kLightCard;
+
 // ---------------- SHELL ----------------
 class Shell extends StatefulWidget {
   final bool is24h;
@@ -191,8 +208,8 @@ class _ShellState extends State<Shell> {
         data: Theme.of(context).copyWith(
           navigationBarTheme: NavigationBarThemeData(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            indicatorColor: kPrimary.withOpacity(0.15),
-            labelTextStyle: MaterialStateProperty.all(
+            indicatorColor: kPrimary.withValues(alpha: 0.15),
+            labelTextStyle: WidgetStatePropertyAll(
               TextStyle(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white
@@ -391,18 +408,18 @@ class _AlarmScreenState extends State<AlarmScreen> {
   Widget _emptyState() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
+      children: [
         CircleAvatar(
           radius: 45,
-          backgroundColor: Color(0xFF1C2330),
-          child: Icon(Icons.notifications_none, size: 42),
+          backgroundColor: chipBg(context),
+          child: const Icon(Icons.notifications_none, size: 42),
         ),
-        SizedBox(height: 16),
-        Text('No alarms yet', style: TextStyle(fontSize: 16)),
-        SizedBox(height: 6),
+        const SizedBox(height: 16),
+        const Text('No alarms yet', style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 6),
         Text(
           'Create your first alarm to get started',
-          style: TextStyle(color: Colors.white54),
+          style: TextStyle(color: mutedText(context)),
         ),
       ],
     );
@@ -422,7 +439,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 24),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.15),
+              color: Colors.red.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(Icons.delete, color: Colors.red),
@@ -532,14 +549,14 @@ class _AlarmCardState extends State<_AlarmCard> {
               if (alarm.label.isNotEmpty)
                 Text(
                   alarm.label,
-                  style: const TextStyle(color: Colors.white54),
+                  style: TextStyle(color: mutedText(context)),
                 ),
               const SizedBox(height: 4),
               Text(
                 alarm.repeatDays.isEmpty
                     ? 'One time'
                     : _repeatText(alarm.repeatDays),
-                style: const TextStyle(fontSize: 12, color: Colors.white54),
+                style: TextStyle(fontSize: 12, color: mutedText(context)),
               ),
             ],
           ),
@@ -662,9 +679,9 @@ class _EditAlarmSheetState extends State<EditAlarmSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0B0F17),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -725,7 +742,7 @@ class _EditAlarmSheetState extends State<EditAlarmSheet> {
 
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Repeat', style: TextStyle(color: Colors.white70)),
+              child: Text('Repeat', style: TextStyle(color: mediumText(context))),
             ),
             const SizedBox(height: 8),
             Row(
@@ -742,7 +759,7 @@ class _EditAlarmSheetState extends State<EditAlarmSheet> {
                   child: CircleAvatar(
                     radius: 20,
                     backgroundColor:
-                        selected ? Colors.blue : const Color(0xFF1C2330),
+                        selected ? kPrimary : chipBg(context),
                     child: Text(labels[i]),
                   ),
                 );
@@ -759,19 +776,19 @@ class _EditAlarmSheetState extends State<EditAlarmSheet> {
               ),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     backgroundColor: Colors.orange,
-                    child: Icon(Icons.wb_sunny),
+                    child: const Icon(Icons.wb_sunny),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sunrise Alarm'),
+                        const Text('Sunrise Alarm'),
                         Text(
                           'Gradual screen brightness',
-                          style: TextStyle(color: Colors.white54, fontSize: 12),
+                          style: TextStyle(color: mutedText(context), fontSize: 12),
                         ),
                       ],
                     ),
@@ -818,7 +835,7 @@ class _EditAlarmSheetState extends State<EditAlarmSheet> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? Colors.blue : const Color(0xFF1C2330),
+          color: active ? kPrimary : chipBg(context),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(t),
@@ -863,11 +880,10 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
   bool sunrise = false;
   String label = '';
   final Set<int> repeat = {};
+
   Future<void> openExactAlarmSettings() async {
     if (!Platform.isAndroid) return;
-
     const channel = MethodChannel('serenity/exact_alarm');
-
     try {
       await channel.invokeMethod('openExactAlarmSettings');
     } catch (e) {
@@ -913,7 +929,6 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
     return false;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -923,14 +938,13 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0B0F17),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -944,7 +958,6 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
 
             const SizedBox(height: 24),
 
-            // Time Picker
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -967,11 +980,7 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
                   children: [
                     _ampmButton('AM', isAm, () => setState(() => isAm = true)),
                     const SizedBox(height: 8),
-                    _ampmButton(
-                      'PM',
-                      !isAm,
-                      () => setState(() => isAm = false),
-                    ),
+                    _ampmButton('PM', !isAm, () => setState(() => isAm = false)),
                   ],
                 ),
               ],
@@ -979,7 +988,6 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
 
             const SizedBox(height: 24),
 
-            // Label
             TextField(
               decoration: const InputDecoration(
                 labelText: 'Label',
@@ -990,16 +998,22 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
 
             const SizedBox(height: 20),
 
-            // Repeat
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Repeat', style: TextStyle(color: Colors.white70)),
+              child: Text(
+                'Repeat',
+                style: TextStyle(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(7, (i) {
-                // 1=Mon ... 7=Sun
                 final labels = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
                 final day = i + 1;
                 final selected = repeat.contains(day);
@@ -1010,7 +1024,7 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
                   child: CircleAvatar(
                     radius: 20,
                     backgroundColor:
-                        selected ? Colors.blue : const Color(0xFF1C2330),
+                        selected ? kPrimary : Theme.of(context).cardColor,
                     child: Text(labels[i]),
                   ),
                 );
@@ -1019,7 +1033,6 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
 
             const SizedBox(height: 20),
 
-            // Sunrise Alarm
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -1033,14 +1046,20 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
                     child: Icon(Icons.wb_sunny),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sunrise Alarm'),
+                        const Text('Sunrise Alarm'),
                         Text(
                           'Gradual screen brightness',
-                          style: TextStyle(color: Colors.white54, fontSize: 12),
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -1055,10 +1074,9 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
 
             const SizedBox(height: 28),
 
-            // Save
             FilledButton(
               onPressed: () async {
-                // 1️⃣ Notification permission
+                final nav = Navigator.of(context);
                 final notifAllowed = await requestNotificationPermission();
                 if (!notifAllowed) return;
 
@@ -1078,8 +1096,7 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
                     when: alarmTime,
                   );
 
-                  Navigator.pop(
-                    context,
+                  nav.pop(
                     Alarm(
                       id: id,
                       hour: hour,
@@ -1093,34 +1110,12 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
                   );
                 } on PlatformException catch (e) {
                   if (e.code == 'exact_alarms_not_permitted') {
-                    await showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text('Allow Exact Alarms'),
-                        content: const Text(
-                          'Enable "Schedule exact alarms" to allow alarms to ring on time.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Not now'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              await openExactAlarmSettings();
-                            },
-                            child: const Text('Open Settings'),
-                          ),
-                        ],
-                      ),
-                    );
-                    return; // 🔴 DO NOT CONTINUE
+                    // Suppress dialog for uninterrupted UX.
+                    return;
                   }
                   rethrow;
                 }
               },
-
               child: const Text('Save Alarm'),
             ),
           ],
@@ -1137,7 +1132,7 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? Colors.blue : const Color(0xFF1C2330),
+          color: active ? kPrimary : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(t),
@@ -1155,7 +1150,6 @@ class _NewAlarmSheetState extends State<NewAlarmSheet> {
       height: 140,
       child: ListWheelScrollView.useDelegate(
         controller: FixedExtentScrollController(
-          // For hours: 12 maps to index 0; minutes map directly
           initialItem: (value == max) ? 0 : value,
         ),
         itemExtent: 42,
@@ -1265,7 +1259,7 @@ class _TimerScreenState extends State<TimerScreen> {
               children: [
                 CustomPaint(
                   size: const Size(280, 280),
-                  painter: _TimerRingPainter(progress),
+                  painter: _TimerRingPainter(progress, chipBg(context)),
                 ),
                 Text(
                   '$minutes:$seconds',
@@ -1343,10 +1337,10 @@ class _TimerScreenState extends State<TimerScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C2330),
+        color: chipBg(context),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(label, style: const TextStyle(color: Colors.white54)),
+      child: Text(label, style: TextStyle(color: mutedText(context))),
     );
   }
 
@@ -1355,7 +1349,7 @@ class _TimerScreenState extends State<TimerScreen> {
       onTap: onTap,
       child: CircleAvatar(
         radius: 22,
-        backgroundColor: const Color(0xFF1C2330),
+        backgroundColor: chipBg(context),
         child: Icon(icon, size: 20),
       ),
     );
@@ -1377,12 +1371,12 @@ class _PresetButton extends StatelessWidget {
         height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFF1C2330),
+          color: chipBg(context),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
           min == 60 ? '1 hour' : '$min min',
-          style: const TextStyle(fontSize: 14, color: Colors.white70),
+          style: TextStyle(fontSize: 14, color: mediumText(context)),
         ),
       ),
     );
@@ -1391,7 +1385,8 @@ class _PresetButton extends StatelessWidget {
 
 class _TimerRingPainter extends CustomPainter {
   final double progress;
-  _TimerRingPainter(this.progress);
+  final Color bgColor;
+  _TimerRingPainter(this.progress, this.bgColor);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1399,7 +1394,7 @@ class _TimerRingPainter extends CustomPainter {
     final radius = size.width / 2 - 12;
 
     final bgPaint = Paint()
-      ..color = const Color(0xFF1C2330)
+      ..color = bgColor
       ..strokeWidth = 12
       ..style = PaintingStyle.stroke;
 
@@ -1535,7 +1530,7 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isRunning
                         ? const Color(0xFFD8433A)
-                        : Colors.blue,
+                        : kPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -1595,7 +1590,7 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
                       children: [
                         Text(
                           'Lap $lapNumber',
-                          style: const TextStyle(color: Colors.white54),
+                          style: TextStyle(color: mutedText(context)),
                         ),
                         Text(
                           format(lapTime),
@@ -1687,14 +1682,14 @@ class _WorldClockScreenState extends State<WorldClockScreen> {
 
           const SizedBox(height: 12),
 
-          const Text('Local Time', style: TextStyle(color: Colors.white54)),
+          Text('Local Time', style: TextStyle(color: mutedText(context))),
           const SizedBox(height: 4),
           Text(
             fmt.format(localNow),
             style: Theme.of(context).textTheme.displayLarge,
           ),
           const SizedBox(height: 4),
-          const Text('Asia/Calcutta', style: TextStyle(color: Colors.white38)),
+          Text('Asia/Calcutta', style: TextStyle(color: subtleText(context))),
 
           const SizedBox(height: 16),
 
@@ -1780,7 +1775,7 @@ class _WorldCityCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(city.name, style: const TextStyle(fontSize: 18)),
-                Text(offset, style: const TextStyle(color: Colors.white54)),
+                Text(offset, style: TextStyle(color: mutedText(context))),
               ],
             ),
           ),
@@ -1870,6 +1865,7 @@ class _AddCitySheetState extends State<AddCitySheet> {
                   title: Text(c.name),
                   subtitle: Text(
                     'UTC${c.offsetHours >= 0 ? '+' : ''}${c.offsetHours}',
+                    style: TextStyle(color: mutedText(context)),
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.add),
@@ -2022,16 +2018,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // ===== FOOTER =====
           Column(
-            children: const [
-              Icon(Icons.wb_sunny, color: Colors.orange, size: 32),
-              SizedBox(height: 8),
-              Text('Serenity', style: TextStyle(fontSize: 16)),
-              SizedBox(height: 4),
-              Text('Version 1.0.0', style: TextStyle(color: Colors.white54)),
-              SizedBox(height: 6),
+            children: [
+              const Icon(Icons.wb_sunny, color: Colors.orange, size: 32),
+              const SizedBox(height: 8),
+              const Text('Serenity', style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 4),
+              Text('Version 1.0.0', style: TextStyle(color: mutedText(context))),
+              const SizedBox(height: 6),
               Text(
                 'A calm, reliable alarm companion',
-                style: TextStyle(color: Colors.white38),
+                style: TextStyle(color: subtleText(context)),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -2067,7 +2063,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: selected ? Colors.blue : Colors.white54),
+      leading: Icon(icon, color: selected ? kPrimary : mutedText(context)),
       title: Text(title),
       subtitle: subtitle != null ? Text(subtitle) : null,
       trailing: Radio<bool>(
@@ -2115,7 +2111,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white54, fontSize: 14),
+        style: TextStyle(color: mutedText(context), fontSize: 14),
       ),
     );
   }

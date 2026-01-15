@@ -45,15 +45,10 @@ class AlarmIntegration {
       }
     } catch (_) {}
 
-    try {
-      final opt = await Permission.ignoreBatteryOptimizations.status;
-      if (!opt.isGranted) {
-        final res = await Permission.ignoreBatteryOptimizations.request();
-        if (!res.isGranted) {
-          await _ch.invokeMethod('openBatteryOptimizationSettings');
-        }
-      }
-    } catch (_) {}
+    // Battery optimization prompt intentionally suppressed to avoid
+    // interrupting user flow when saving an alarm.
+    // If needed in future, enable requesting `Permission.ignoreBatteryOptimizations`
+    // or deep-link to `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS` here.
   }
 
   static Future<void> _mirrorToPrefs({
@@ -79,16 +74,6 @@ class AlarmIntegration {
       'label': label,
     });
 
-    await prefs.setString('alarms', jsonEncode(arr));
-  }
-
-  static Future<void> _removeFromPrefs(int id) async {
-    final prefs = await SharedPreferences.getInstance();
-    final current = prefs.getString('alarms') ?? '[]';
-    final arr = (jsonDecode(current) as List)
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
-    arr.removeWhere((e) => e['id'] == id);
     await prefs.setString('alarms', jsonEncode(arr));
   }
 }
